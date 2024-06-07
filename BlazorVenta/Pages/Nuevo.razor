@@ -1,0 +1,77 @@
+﻿@page "/nuevo"
+@page "/nuevo/{Id:int}"
+
+@using Data
+@using System.Net.Http.Json
+
+@inject HttpClient http
+@inject NavigationManager navManager
+
+<EditForm Model="@producto">
+        <div>
+            @if (Id != 0)
+            {
+                    <h2>Editar producto</h2>
+            }
+            else
+            {
+                    <h2>Nuevo producto</h2>
+            }
+        </div>
+        <div class="mb-3">
+            <label>Producto</label>
+            <InputText class="form-control" @bind-Value="producto.Nombre"></InputText>
+        </div>
+        <div class="mb-3">
+            <label>Cantidad</label>
+            <InputNumber class="form-control" @bind-Value="producto.Cantidad"></InputNumber>
+        </div>
+        <div class="mb-3">
+            <label>Precio</label>
+            <InputNumber class="form-control" @bind-Value="producto.Precio"></InputNumber>
+        </div>
+        <div class="mb-3">
+            <label>Fecha</label>
+            <InputDate class="form-control" @bind-Value="producto.Fecha"></InputDate>
+        </div>
+        <div class="mb-3">
+            <button class="btn btn-primary" @onclick="Save">Guardar</button>
+            <a class="btn btn-warning" href="/" >Volver</a>
+        </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    public string Url = "/api/Producto";
+
+    Producto producto = new();
+    Respuesta<Producto>? respuesta = new();
+    Respuesta<object> obrespuesta = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            respuesta = await http.GetFromJsonAsync<Respuesta<Producto>>(Url + "/" + Id);
+            producto = respuesta!.Data;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (Id != 0)
+        {
+            var httpResponse = await http.PutAsJsonAsync<Producto>(Url, producto);
+            obrespuesta = httpResponse.Content.ReadFromJsonAsync<Respuesta<object>>().Result!;
+        }
+
+        else
+        {
+            var httpResponse = await http.PostAsJsonAsync<Producto>(Url, producto);
+            obrespuesta = httpResponse.Content.ReadFromJsonAsync<Respuesta<object>>().Result!;
+        }
+        navManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,34 @@
+﻿@page "/eliminar/{Id:int}"
+
+@using Data;
+@using System.Net.Http
+@using System.Net.Http.Json
+
+@inject HttpClient http
+@inject NavigationManager navigation
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    Respuesta<object>? respuesta = new Respuesta<object>();
+
+    public string Url = "/api/Producto";
+
+    private async Task Delete()
+    {
+        var response = await http.DeleteAsync(Url+ "/" +Id);
+        respuesta = response.Content.ReadFromJsonAsync<Respuesta<object>>().Result;
+
+        navigation.NavigateTo("/");
+    }
+}
+
+<div class="container-fluid">
+    <h3>¿Deseas eliminar este producto?</h3>
+    <br />
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="Delete">Aceptar</button>
+        <a class="btn btn-warning" href="/">Volver</a>
+    </div>
+</div>

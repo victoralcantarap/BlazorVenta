@@ -1,0 +1,104 @@
+﻿@page "/"
+@page "/{Id:int}"
+
+@using Data
+@using BlazorBootstrap
+@using System.Net.Http.Json
+
+@inject HttpClient http
+@inject NavigationManager navManager
+
+<div>
+    <h2>Lista de producto</h2>
+    <a class="btn btn-primary mb-2" href="nuevo">Nuevo</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Fecha</th>
+                <th>Itbis</th>
+                <th>Total</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (respuesta?.Data == null)
+            {
+                <br />
+                <p><em>No hay conexion con el servidor...</em></p>
+            }
+            else
+            {
+                @foreach (var db in respuesta.Data)
+                {
+                    <tr>
+                        <td>@db.Nombre</td>
+                        <td>@db.Cantidad</td>
+                        <td>@db.Precio</td>
+                        <td>@db.Fecha</td>
+                        <td>@db.Itbis</td>
+                        <td>@db.Total</td>
+                        <td>
+                            <a class="btn btn-warning btn-sm mb-1" href="/nuevo/@db.Id">Editar</a>
+                            <a class="btn btn-danger btn-sm mb-1" href="@db.Id" @onclick="OnShowModalClick">Eliminar</a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<Modal @ref="modal" title="¿Deseas eliminar este producto?" Message="" IsVerticallyCentered="true">
+    <BodyTemplate>
+        Presione guardar para continuar...
+    </BodyTemplate>
+    <FooterTemplate>
+        <a class="btn btn-secondary" @onclick="OnHideModalClick">Cerrar</a>
+        <a class="btn btn-primary" href="/nuevo" @onclick="Delete">Guardar</a>
+    </FooterTemplate>
+</Modal>
+
+@code {
+
+    Respuesta<List<Producto>>? respuesta = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        respuesta = await http.GetFromJsonAsync<Respuesta<List<Producto>>>("/api/Producto");
+    }
+
+    //Metodo para eliminar
+    [Parameter]
+    public int Id { get; set; }
+
+    public string Url= "/api/Producto";
+
+    Respuesta<object>? respuestas = new();
+
+    private async Task Delete()
+    {
+        var httpResponse = await http.DeleteAsync(Url + "/" + Id);
+        respuestas = httpResponse.Content.ReadFromJsonAsync<Respuesta<object>>().Result;
+
+        navManager.NavigateTo("/");
+    }
+
+    //Modal
+    private Modal modal = default!;
+
+    private async Task OnShowModalClick()
+    {
+        await modal.ShowAsync();
+    }
+
+    private async Task OnHideModalClick()
+    {
+        await modal.HideAsync();
+    }
+}
